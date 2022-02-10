@@ -1,5 +1,16 @@
 function(cargo_build)
-    cmake_parse_arguments(CARGO "" "NAME" "" ${ARGN})
+    cmake_parse_arguments(CARGO "SHARED" "NAME" "" ${ARGN})
+
+    if (CARGO_SHARED)
+        set(CARGO_OUTPUT_TYPE SHARED)
+        set(CARGO_LIBARAY_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
+        set(CARGO_LIBARAY_PREFIX ${CMAKE_SHARED_LIBRARY_PREFIX})
+    else()
+        set(CARGO_OUTPUT_TYPE STATIC)
+        set(CARGO_LIBARAY_SUFFIX ${CMAKE_STATIC_LIBRARY_SUFFIX})
+        set(CARGO_LIBARAY_PREFIX ${CMAKE_STATIC_LIBRARY_PREFIX})
+    endif()
+
     string(REPLACE "-" "_" LIB_NAME ${CARGO_NAME})
 
     set(CARGO_TARGET_DIR ${CMAKE_CURRENT_BINARY_DIR})
@@ -40,7 +51,7 @@ function(cargo_build)
         set(LIB_BUILD_TYPE "debug")
     endif()
 
-    set(LIB_FILE "${CARGO_TARGET_DIR}/${LIB_TARGET}/${LIB_BUILD_TYPE}/${CMAKE_STATIC_LIBRARY_PREFIX}${LIB_NAME}${CMAKE_STATIC_LIBRARY_SUFFIX}")
+    set(LIB_FILE "${CARGO_TARGET_DIR}/${LIB_TARGET}/${LIB_BUILD_TYPE}/${CARGO_LIBARAY_PREFIX}${LIB_NAME}${CARGO_LIBARAY_SUFFIX}")
 
 	if(IOS)
 		set(CARGO_ARGS "lipo")
@@ -64,7 +75,7 @@ function(cargo_build)
         DEPENDS ${LIB_SOURCES}
         COMMENT "running cargo")
     add_custom_target(${CARGO_NAME}_target ALL DEPENDS ${LIB_FILE})
-    add_library(${CARGO_NAME} STATIC IMPORTED GLOBAL)
+    add_library(${CARGO_NAME} ${CARGO_OUTPUT_TYPE} IMPORTED GLOBAL)
     add_dependencies(${CARGO_NAME} ${CARGO_NAME}_target)
     set_target_properties(${CARGO_NAME} PROPERTIES IMPORTED_LOCATION ${LIB_FILE})
 endfunction()
